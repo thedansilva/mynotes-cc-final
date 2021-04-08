@@ -1,4 +1,4 @@
-# Distributed Dungeons and Dragons: Arena 
+# MyNotes - Cloud Computing Final Project
 
 Distributed Dungeons and Dragons: Arena is a UDP multicast application that allows users to connect and play a simplified realisation of the popular tabletop game Dungeons and Dragons. This application plots multiple players onto one map where they must fight each other until one player is left standing to be deemed the winner. 
 This Java game successfully uses UDP multicasting for communication.
