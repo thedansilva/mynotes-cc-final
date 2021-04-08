@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('../partials/head'); %>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+            integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+            crossorigin="anonymous"></script>
+
+</head>
+<style>
+    .border {
+        width: 100px;
+    }
+
+    .tab {
+        padding-left: 20px;
+
+    }
+
+    .jumbotron {
+        min-height: 300px;
+        max-height: 1000px;
+    }
+
+    .jumbotron1 {
+        min-height: 300px;
+        max-height: 1000px;
+    }
+</style>
+
+<body class="container-fluid">
+
+    <header>
+        <%- include('../partials/header-upload'); %>
+    </header>
+
+    <main>
+
+        <br>
+        <br>
+        <div class="container-fluid">
+            <div class="jumbotron" style="min-height:50px; padding-bottom:20px; padding-top:20px;">
+                <div class="col text-center">
+                    <h1>Error!</h1>
+                    <p>Course was not found or user does not have permission to view course.</p>
+                    <p class="lead"></p>
+                    <hr class="my-2">
+                    <button type="button" class="btn btn-primary" onclick="goBack()">Press here to go back</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+
+<script>
+    function goBack() {
+        window.location.href = "/home";
+    }
+</script>
+
+
+</html>

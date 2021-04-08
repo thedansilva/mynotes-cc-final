@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('../partials/head'); %>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+            integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+            crossorigin="anonymous"></script>
+            <script>    var userID = parseInt('<%= userID %>');
+            </script>
+
+</head>
+<!-- the below auto redirects the user away if they're not in the course-->
+<style>
+    .border {
+        width: 100px;
+    }
+
+    .tab {
+        padding-left: 20px;
+
+    }
+
+    .jumbotron {
+        min-height: 300px;
+        max-height: 1000px;
+        padding-top: 20px;
+    }
+
+    table {
+        display: flex;
+        flex-flow: column;
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    thead {
+        flex: 0 0 auto;
+    }
+
+    tbody {
+        flex: 1 1 auto;
+        display: block;
+
+
+        height: 300px;
+    }
+
+    tr {
+        width: 100%;
+        display: table;
+        table-layout: fixed;
+    }
+
+    td {
+
+        word-break: break-all;
+    }
+</style>
+
+<body class="container-fluid">
+
+    <header>
+        <%- include('../partials/header-courses'); %>
+    </header>
+
+    <main>
+
+        <br>
+        <br>
+        <div class="container-fluid">
+            <div class="jumbotron" style="min-height:50px; padding-bottom:20px; padding-top:20px;">
+                <h1>Course: <span id="courseName"></span></h1>
+                <p class="lead"></p>
+                <hr class="my-2">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm">
+                <div class="jumbotron">
+
+                    <h1>Course Members</h1>
+                    <hr>
+                    <div style="overflow-y:auto;">
+                        <p>
+                        <table class="table table-bordered bg-white table-wrapper-scroll-y my-custom-scrollbar">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Name</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersInCourse">
+                                <p>
+                                </p>
+                            </tbody>
+                        </table>
+                        </p>
+                        <p id="myCourses">
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm">
+
+                <!-- Available Courses Columns -->
+                <div class="jumbotron">
+                    <h1>Course Files</h1>
+                    <hr>
+                    <div class="panel-body table-responsive">
+                        <p>
+                        <table class="table table-bordered bg-white menu-scrollable">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Date Uploaded</th>
+
+                                    <th>Tag</th>
+                                </tr>
+                            </thead>
+                            <tbody id="courseFiles">
+
+                            </tbody>
+                        </table>
+                        </p>
+                    </div>
+                    <p id="myCourses">
+                    </p>
+
+                </div>
+            </div>
+        </div>
+        <div class="jumbotron" style="min-height:50px; padding-bottom:20px; padding-top:10px;">
+
+            <div class="col-md-6 offset-md-3 mt-5">
+
+                <h1 class="text-center">Upload your files here:</h1>
+
+
+                <hr>
+                <div class="form-group mt-3 ">
+
+                    <form action="/upload" enctype="multipart/form-data" method="POST">
+                        <!-- <div class="custom-file">
+                <input type="file" class="custom-file-input" id="customFile">
+                <label class="custom-file-label" for="customFile">Choose file</label>
+              </div> -->
+                        <input name="userID" id="userID" type="hidden" required="required" value='<%=userID%>'>
+                        <input name="uploadCourseID" id="uploadCourseID" type="hidden" required="required"
+                            value="courseID">
+                        <div class="custom-file">
+                            <input type="file" name="photo" class="custom-file-input" id="customFile" />
+                            <label class="custom-file-label" for="customFile">Choose file</label>
+                        </div>
+                        <hr>
+                        <div class="form-group">
+                            <label for="exampleFormControlSelect1">Tag</label>
+                            <select class="form-control" id="exampleFormControlSelect1" name="platform"
+                                required="required">
+                                <option>Core</option>
+                                <option>Assistance</option>
+                                <option>Supplemental</option>
+                            </select>
+                            <hr>
+                        </div>
+                        <div class="col text-center">
+                            <a class="active nav-link" href="/upload-success"><button type="submit"
+                                    class="btn btn-primary" value="Upload File">Submit</button></a>
+                        </div>
+
+                    </form>
+                </div>
+
+
+
+            </div>
+
+
+
+        </div>
+        <!-- public/index.html file -->
+
+
+    </main>
+
+</body>
+
+<!-- FETCH FRONTEND FUNCTIONS -->
+
+<script>
+    var courseName = "";
+    var courseID = parseInt('<%= courseID %>'); // gets actual courseID from the ID of the course
+    function checkInCourse() {
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch("/getIfUserIsInCourseJSON", { method: 'POST', headers: myHeaders, body: JSON.stringify({ "courseID": Number(courseID) }) })
+            .then(response => response.json())
+            .then(data => isUserInCourse(data))
+            .catch(err => showError(err));
+    }
+
+    function isUserInCourse(data) {
+        if (data.length > 0) {
+            // do nothing
+        } else {
+            window.location.href = "/courses404";
+        }    }
+
+    function getCourseName() {
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch("/getCourseNameJSON", { method: 'POST', headers: myHeaders, body: JSON.stringify({ "courseID": Number(courseID) }) })
+            .then(response => response.json())
+            .then(data => setCourseName(data))
+            //.catch(err => showError(err));
+            .catch(err => window.location.replace("/courses404"));
+    }
+    function setCourseName(data) {
+        courseName = data[0].courseName;
+        //console.log(courseName);
+        document.getElementById("courseName").innerHTML = courseName;
+        document.getElementById("uploadCourseID").value = courseID;
+    }
+
+    $(".custom-file-input").on("change", function () {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+    });
+
+    function fetchUpdatedFiles() {
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch("/getAllFilesFromCourseJSON", { method: 'POST', headers: myHeaders, body: JSON.stringify({ "courseID": Number(courseID) }) })
+            .then(response => response.json())
+            .then(data => updateFiles(data))
+            .catch(err => showError(err));
+
+    }
+
+    function updateFiles(data) {
+        let container = document.getElementById("courseFiles");
+        var tableString = "";
+        if (data != null) {
+
+            data.forEach(function (data) {
+                tableString +=
+                    `<tr>
+                        <td><a onClick="downloadFile('${data.UUID}', '${data.filename}');" style="cursor: pointer; cursor: hand; text-decoration: underline; text-decoration-color: blue;">${data.filename}</a></td>
+                        <td>${data.dateAdded}</td>
+                        <td>${data.tag}</td>
+                      </tr>`;
+            });
+            container.innerHTML = tableString;
+        }
+    }
+
+    function fetchMembers() {
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch("/getAllUsersJSON", { method: 'POST', headers: myHeaders, body: JSON.stringify({ "courseID": Number(courseID) }) })
+            .then(response => response.json())
+            .then(data => updateMembers(data))
+            .catch(err => showError(err));
+    }
+
+    function updateMembers(data) {
+        let container = document.getElementById("usersInCourse");
+        var tableString = "";
+        if (data != null) {
+            data.forEach(function (data) {
+                tableString +=
+                    `<tr>
+                        <td>${data.userID}
+                        </td>
+                        <td>${data.username}</td>
+                      </tr>`;
+            });
+            container.innerHTML = tableString;
+        }
+    }
+
+    function downloadFile(UUID, fileName) {
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch("/downloadFile", { method: 'POST', headers: myHeaders, body: JSON.stringify({ UUID: UUID, fileName: fileName }), responseType: 'blob' })
+            .then(response => response.json())
+            .then(data => downloadResponse(data, fileName))
+            .catch(err => showError(err));
+    }
+
+    function downloadResponse(data, fileName) {
+        const url = window.URL.createObjectURL(new Blob([new Uint8Array(data.Body.data)], { type: data.ContentType }));
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    function showError(err) {
+        console.error(err);
+        //alert("Something went wrong");
+    }
+
+    window.onload = function () {
+        checkInCourse();
+        getCourseName();
+        fetchUpdatedFiles();
+        fetchMembers();
+    };
+
+
+</script>
+
+</html>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('../partials/head'); %>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+            integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+            crossorigin="anonymous"></script>
+
+</head>
+
+<style>
+    .chat {
+        min-height: 500px;
+    }
+
+    .jumbotron {
+        min-height: 600px;
+        max-height: 1000px;
+        min-width: 100px;
+        padding-top: 20px;
+    }
+
+    .scrollable-menu {
+        height: auto;
+        max-height: 200px;
+        overflow-x: hidden;
+    }
+</style>
+<header>
+    <%- include('../partials/header-home'); %>
+</header>
+
+<body class="container-fluid">
+
+
+    <main>
+
+        <br>
+        <br>
+        <div class="row">
+            <div class="col-sm">
+                <div class="jumbotron">
+                    <h1>Chat</h1>
+                    <p>Current course: <span id="currentCourse">none</span></p>
+                    <!-- Course-->
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select a Course </button>
+                        <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuButton">
+                            <div id="allCourses">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat box-->
+                    <div class="col-12 px-0 py-3">
+                        <div class="chat px-5 py-5 chat-box bg-white scrollable-menu">
+                            <div id="chat">
+
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="messagetext" placeholder="Type a message"
+                            aria-describedby="button-addon2" class="form-control rounded-0 border-0 bg-light">
+                        <div class="input-group-append">
+                            <button onclick="sendMessage()" id="button-addon2" type="submit"
+                                class="btn btn-link">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="jumbotron">
+                    <h1>My Courses</h1>
+                    <p>Your current courses:</p>
+                    <p id="myCourses">
+                    </p>
+                </div>
+            </div>
+            <div class="col-sm">
+
+                <!-- Available Courses Columns -->
+                <div class="jumbotron">
+                    <h1>Join Courses</h1>
+                    <p>Join a course!</p>
+                    <p id="joinCourses"></p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+
+<!-- FETCH FRONTEND FUNCTIONS -->
+
+<script>
+    var currentChatCourse = -1; // GLOBAL VARIABLE TO FILTER THE CHAT
+    var alreadyUpdatingChat = false;
+    var userID = Number('<%=userID%>');
+    function fetchUpdatedCourses() {
+        fetch("/getCoursesJSON")
+            .then(response => response.json())
+            .then(data => updateCurrentCourses(data))
+            .catch(err => showError(err));
+        fetch("/getJoinableCoursesJSON")
+            .then(response => response.json())
+            .then(data => updateJoinableCourses(data))
+            .catch(err => showError(err));
+        fetch("/getAllCoursesJSON")
+            .then(response => response.json())
+            .then(data => updateAllCourses(data))
+            .catch(err => showError(err));
+    }
+
+    function fetchChat() {
+        if (!(alreadyUpdatingChat)) {
+            fetch("/updateChatJSON")
+                .then(response => response.json())
+                .then(data => updateChat(data))
+                .catch(err => showError(err));
+        } else {
+            console.log("Mutex lock pickup");
+        }
+    }
+
+    function updateAllCourses(data) {
+        alreadyUpdatingChat = true;
+        let container = document.getElementById("allCourses");
+        var tableString = "";
+        if (data != null) {
+            tableString = `<ul class="list-group">`;
+
+            data.forEach(function (data) {
+                tableString +=
+                    `<a class="dropdown-item" onclick="filterBy('${data.courseID}', '${data.courseName}')">${data.courseName}</a>`;
+            });
+            tableString += `</ul>`;
+            container.innerHTML = tableString;
+        }
+        alreadyUpdatingChat = false;
+    }
+
+    function filterBy(courseID, courseName) {
+        console.log(courseName);
+        let currentCourse = document.getElementById("currentCourse");
+        currentCourse.innerHTML = courseName;
+        currentChatCourse = courseID;
+        fetchChat(); // hard coded 'instant' refresh
+    }
+    function updateCurrentCourses(data) {
+        let container = document.getElementById("myCourses");
+        var tableString = "";
+        if (data != null) {
+            tableString = `<ul class="list-group">`;
+
+            data.forEach(function (data) {
+                tableString +=
+                    `<li class="list-group-item"><a href="/courses/${data.courseID}">${data.courseName}</a><a><button type="button"
+                        class="btn btn-danger btn-sm float-right" onclick="leaveGroup(${data.courseID})">Leave</button></a></li>`;
+            });
+            tableString += `</ul>`;
+            container.innerHTML = tableString;
+        }
+    }
+
+    function sendMessage() {
+        var textToSend = document.getElementById("messagetext").value;
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch("/sendMessageJSON", { method: 'POST', headers: myHeaders, body: JSON.stringify({ "message": textToSend, "courseID": currentChatCourse }) })
+            .then(response => response.json())
+            .catch(err => showError(err));
+        document.getElementById("messagetext").value = "";
+        textToSend = "";
+    }
+
+    function updateJoinableCourses(data) {
+        let container = document.getElementById("joinCourses");
+        var tableString = "";
+        if (data != null) {
+            tableString = `<ul class="list-group">`;
+
+            data.forEach(function (data) {
+                tableString +=
+                    `<li class="list-group-item">${data.courseName}<a><button type="button"
+                        class="btn btn-primary btn-sm float-right" onclick="joinGroup(${data.courseID})">Join</button></a></li>`;
+            });
+            tableString += `</ul>`;
+
+            container.innerHTML = tableString;
+        }
+    }
+
+    function updateChat(data) {
+        let container = document.getElementById("chat");
+        var tableString = "";
+        var notesRankColor = "";
+        var yyyymmdd = "";
+        var userID = '<%- JSON.stringify(userID) %>';
+        //  console.log("your userid is " + userID);
+        if (data != null) {
+            tableString = ``;
+            data.forEach(function (data) {
+                notesRankColor = "";
+                var date = new Date(data.dateTime).toLocaleString('en-US', { timeZone: 'America/Toronto' });;
+                //    console.log(data.message + " belongs to userID of " + data.userID + " and you are " + userID);
+                if (data.courseID == currentChatCourse) {
+                    if (data.notesRank > 30) {
+                        notesRankColor = "Black"; // VIP BLACK
+
+                    } else if (data.notesRank > 21) {
+                        notesRankColor = "GoldenRod"; // gold
+                    } else if (data.notesRank > 11) {
+                        notesRankColor = "Cyan"; // blue
+                    } else if (data.notesRank >= 0) {
+                        notesRankColor = "#DarkGray"; // grey
+                    } else {
+                        notesRankColor = "#DarkGray"; // fallback - grey
+                    }
+                    if (data.userID == userID) {
+                     //   console.log(data.userID + " has notes rank of " + data.notesRank);
+                     //   console.log("therefore " + notesRankColor)
+                        tableString +=
+                            `<div class="media w-50 ml-auto mb-1">
+                        <div class="media-body">
+                            <div class="bg-primary rounded py-2 px-3 mb-2">
+                                <p class="text-small mb-0 text-white">${data.message}</p>
+                            </div>
+                            <div>
+                                <p class="small text-muted"><a "text-decoration: none; color: inherit;" href="/profile/${data.userID}"><span style="color: ${notesRankColor}">${data.username}</span></a> | ${date} </p>
+                            </div>
+                        </div>
+                    </div>`;
+                    
+                    } else {
+                        tableString +=
+                            `<div class="media w-50 mb-1">
+                        <div class="media-body ml-3">
+                            <div class="bg-secondary rounded py-2 px-3 mb-2">
+                                <p class="text-small mb-0 text-white">${data.message}</p>
+                            </div>
+                            <p class="small text-muted"><a style="text-decoration: none; color: inherit;" href="/profile/${data.userID}"><span style="color: ${notesRankColor}">${data.username}</span></a> | ${date} </p>
+                        </div>
+                    </div>`;
+                    }
+                } else {
+                    //console.log(data.message + " doesn't belong here!! " + data.courseID);
+                }
+
+            });
+            tableString += ``;
+            container.innerHTML = tableString;
+        }
+    }
+
+    function leaveGroup(courseID) {
+        console.log("The group ID is " + courseID);
+        pass = courseID;
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch('/leaveGroup', { method: 'POST', headers: myHeaders, body: JSON.stringify({ "userID": userID, "groupID": pass }) })
+            .then(function (response) {
+                if (response.ok) {
+                    console.log('Delete was recorded');
+                    fetchUpdatedCourses();
+                    return;
+                }
+                throw new Error('Request failed.');
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
+    }
+
+    function joinGroup(courseID) {
+        console.log("The group ID is " + courseID);
+        pass = courseID;
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch('/joinGroup', { method: 'POST', headers: myHeaders, body: JSON.stringify({ "userID": userID, "groupID": pass }) })
+            .then(function (response) {
+                if (response.ok) {
+                    console.log('Delete was recorded');
+                    fetchUpdatedCourses();
+                    return;
+                }
+                throw new Error('Request failed.');
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
+    }
+
+    function updateProfits(data) {
+        let container = document.getElementById("profits");
+        var tableString = "";
+        if (data[0].tickerName != null) {
+            tableString = `<table class="table text-center">
+                    <th>Ticker Name</th>
+                    <th>Current Price</th>
+                    <th>Your Avg Price</th>
+                    <th>Num. Shares</th>
+                    <th>Total Profit</th>`;
+
+            data.forEach(function (data) {
+                if (data.gainLoss < 0) { // loss. print as negative
+                    tableString +=
+                        `
+                <tr><td>${data.tickerName.toUpperCase()}</td
+                    ><td>${data.quote}</td>
+                    <td>${data.avgPrice}</td>
+                    <td>${data.numShares}</td>
+                    <td class="text-danger">${data.gainLoss}</td></tr>`;
+                } else { // gain. print as positive
+                    tableString +=
+                        `
+                <tr><td>${data.tickerName.toUpperCase()}</td
+                    ><td>${data.quote}</td>
+                    <td>${data.avgPrice}</td>
+                    <td>${data.numShares}</td>
+                    <td class="text-success">+${data.gainLoss}</td></tr>`;
+                }
+            });
+            tableString += `</table>`;
+
+            container.innerHTML = tableString;
+        }
+    }
+
+    function verifyNews() {
+        var companyName = document.getElementById("companyNameInput").value;
+        console.log("Company is " + companyName);
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        if (companyName) { // if we have data
+            fetch('/getStockNewsJSON', {
+                method: 'post',
+                headers: myHeaders,
+                body: JSON.stringify({
+                    "companyName": companyName
+                }),
+            }).then(response => response.json())
+                .then(data => updateNews(data))
+                .catch(err => showError(err));
+        } else {
+            alert("Please enter a valid company name.");
+        }
+    }
+
+
+    function sendEmail() {
+        var emailName = document.getElementById("email").value;
+        console.log("Company is " + emailName);
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        if (emailName) { // if we have data
+            fetch('/sendEmail', {
+                method: 'post',
+                headers: myHeaders,
+                body: JSON.stringify({
+                    "emailName": emailName
+                }),
+            });
+            alert("Email sent!");
+
+        } else {
+            alert("Please enter an email.");
+        }
+    }
+
+    function updateNews(data) {
+        let container = document.getElementById("news");
+        var tableString = "";
+        if (data != null) {
+            console.log(data);
+
+            //data[0].articles.forEach(function (data) {
+            for (var x = 0; x < 3; x++) {
+                if (data[0].articles[x].description != null) {
+                    tableString += `<div class="card">
+                        <div class="card-header">
+                        <a href="${data[0].articles[x].url}">Link to article</a>
+                        </div>
+                        <div class="card-body">
+                          <h5 class="card-title">${data[0].articles[x].title}</h5>`;
+                    if (data[0].articles[x].urlToImage != null) {
+                        tableString += `<img src="${data[0].articles[x].urlToImage}" alt='image' width=250 height = 250 >`;
+                    }
+                    tableString += `<p class="card-text">${data[0].articles[x].description}</p>
+                        </div>
+                        </div>
+                        <br>
+                        <br>`;
+                }
+            }
+            //});
+
+            // data.articles.forEach(function (data) {
+            //     if (data.gainLoss < 0) { // loss. print as negative
+            //         tableString +=
+            //             `<div class="card">
+            //             <div class="card-header">
+            //             Featured
+            //             </div>
+            //             <div class="card-body">
+            //                  <h5 class="card-title">Special title treatment</h5>
+            //                 <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+            //                 <a href="#" class="btn btn-primary">Go somewhere</a>
+            //             </div>
+            //             </div>`;
+            //     }
+            // });
+
+            container.innerHTML = tableString;
+        } else {
+            console.log("no data");
+        }
+    }
+
+    function showError(err) {
+        console.error(err);
+        //alert("Something went wrong");
+    }
+
+    window.onload = function () {
+        fetchUpdatedCourses();
+        if (!(alreadyUpdatingChat))
+            fetchChat();
+    };
+
+    setInterval(fetchChat, 2000);
+
+</script>
+
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('../partials/head'); %>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.js"></script>
+</head>
+<style>
+    .border{
+        width: 100px;
+    }
+    .tab{
+        padding-left: 20px;
+    }
+
+    .jumbotron {
+        min-height: 300px;
+        max-height: 1000px;
+        padding-top:20px;
+    }
+</style>
+
+<body class="container-fluid">
+
+    <header>
+        <%- include('../partials/header-profile'); %>
+    </header>
+
+    <main>
+
+        <br>
+        <br>
+        <div class="container-fluid">
+                <div class="jumbotron">
+                    <h1>
+                        <%=username%>'s
+                        Profile</h1>
+                        <p class="lead">Welcome to 
+                            <%=username%>'s
+                            profile page! You can see courses, recently uploaded files, and general information.</p>
+                        <hr class="my-2">
+                            <p>Username: <%=username%></p>
+                            <p>Member since: <%=dateJoined%></p>
+                            <p>NotesRank: <%=notesRank%></p>
+                </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm">
+                <div class="jumbotron">
+                    <h1>
+                        <%=username%>'s
+                        Courses</h1>
+                    <p>
+                       <%=username%>'s
+                        current courses:</p>
+                    <!--<ul class="list-group"></ul>-->
+                    <p id="myCourses">
+                    </p>
+                </div>
+            </div>
+            <div class="col-sm">
+
+                <!-- Available Courses Columns -->
+                <div class="jumbotron">
+                    <h1>Recently Uploaded Items</h1>
+                    <p>
+                        <%=username%>'s
+                        latest uploads:</p>
+                    <!--<ul class="list-group"></ul>-->
+                    <p id="myFiles">
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+
+<!-- FETCH FRONTEND FUNCTIONS -->
+
+<script>
+    var userID = Number('<%=userID%>');
+    function fetchUpdatedCourses() {
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch('/getSpecificUserCoursesJSON', { method: 'POST', headers: myHeaders, body: JSON.stringify({ "id": userID }) })
+            .then(response => response.json())
+            .then(data => updateCurrentCourses(data))
+            .catch(err => showError(err));
+
+    }
+
+    function fetchUploadedFiles() {
+        console.log("fetching files");
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch('/getAllFilesFromUserJSON', { method: 'POST', headers: myHeaders, body: JSON.stringify({ "id": userID }) })
+            .then(response => response.json())
+            .then(data => updateCurrentFiles(data))
+            .catch(err => showError(err));
+    }
+
+    function updateCurrentCourses(data) {
+       let container = document.getElementById("myCourses");
+       var tableString = "";
+       if (data != null) {
+           tableString = `<ul class="list-group">`;
+
+           data.forEach(function (data) {
+               tableString +=
+                   `<li class="list-group-item"><a href="/courses/${data.courseID}">${data.courseName}</a><a></a></li>`;
+           });
+           tableString += `</ul>`;
+
+           container.innerHTML = tableString;
+       }
+   }
+
+   function updateCurrentFiles(data) {
+       let container = document.getElementById("myFiles");
+       var tableString = "";
+       //console.log("data: "+data);
+       if (data != null) {
+           tableString = `<ul class="list-group">`;
+
+           data.forEach(function (data) {
+               tableString +=
+                   `<li class="list-group-item"><a href="/courses/${data.courseID}">${data.filename}</a></li>`;
+           });
+           tableString += `</ul>`;
+
+           container.innerHTML = tableString;
+       }
+   } 
+    
+
+    function leaveGroup(courseID) {
+        console.log("The group ID is " + courseID);
+        pass = courseID;
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch('/leaveGroup', { method: 'POST', headers: myHeaders, body: JSON.stringify({ "groupID": pass }) })
+            .then(function (response) {
+                if (response.ok) {
+                    console.log('Delete was recorded');
+                    fetchUpdatedCourses();
+                    return;
+                }
+                throw new Error('Request failed.');
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
+    }
+
+    function joinGroup(courseID) {
+        console.log("The group ID is " + courseID);
+        pass = courseID;
+        var myHeaders = new Headers();
+        myHeaders.append('Content-Type', 'application/json');
+        fetch('/joinGroup', { method: 'POST', headers: myHeaders, body: JSON.stringify({ "groupID": pass }) })
+            .then(function (response) {
+                if (response.ok) {
+                    console.log('Delete was recorded');
+                    fetchUpdatedCourses();
+                    return;
+                }
+                throw new Error('Request failed.');
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
+    }
+
+
+    function showError(err) {
+        console.error(err);
+        //alert("Something went wrong");
+    }
+
+    window.onload = function () {
+        fetchUpdatedCourses();
+        fetchUploadedFiles();
+    };
+
+    // setInterval(fetchWatchlistandProfits, 2000);
+
+</script>
+
+</html>
