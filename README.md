@@ -24,13 +24,11 @@ After successful login, users are redirected to the home page. This home page is
 
 **SCREENSHOT NEEDED**
 
-### Joinable Courses
+### Joinable Courses/Currently Enrolled Courses
 
-The joinable courses segment is a list of available courses the users can join. There is a join button beside every course name and once the user joins a course, the course will refresh in the list of Currently Enrolled courses.
+The joinable courses segment is a list of available courses the users can join. There is a join button beside every course name and once the user joins a course, the course will refresh in the list of Currently Enrolled courses.  
 
-### Currently Enrolled Courses
-
-The currently enrolled segment is a list of coures the user is already in. There is a leave button beside every course name and once the user leaves a course, the course will refresh in the list of Joinable courses.
+The currently enrolled segment is a list of coures the user is already in. There is a leave button beside every course name and once the user leaves a course, the course will refresh in the list of Joinable courses.  
 
 ### Chat Room
 
