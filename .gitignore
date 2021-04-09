@@ -10,4 +10,3 @@ npm-debug.log
 # Docker
 Dockerfile
 docker-compose.yml
-export SENDGRID_API_KEY='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'
